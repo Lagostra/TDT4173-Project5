@@ -1,12 +1,11 @@
 import os
 import numpy as np
-from imageio import imread
 import cv2
 import matplotlib.pyplot as plt
 
 
 def load_data(path, n_images):
-    x = np.empty((n_images, 1, 20, 20), dtype=np.uint8)
+    x = np.empty((n_images, 20, 20), dtype=np.uint8)
     y = np.empty(n_images, dtype=np.uint8)
 
     classes = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
@@ -16,7 +15,8 @@ def load_data(path, n_images):
 
         for im in os.listdir(p):
             im_p = os.path.join(p, im)
-            x[j, ...] = imread(im_p)
+            im = cv2.imread(im_p, 0)
+            x[j, ...] = im
             y[j, ...] = i
 
             j += 1
@@ -25,9 +25,7 @@ def load_data(path, n_images):
 
 
 def threshold(x):
-    image = cv2.imread('data/chars74k-lite/a/a_99.jpg', 0)
-
-    blur = cv2.medianBlur(image, 3)
+    blur = cv2.medianBlur(x, 3)
 
     th, dst = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
@@ -35,7 +33,11 @@ def threshold(x):
 
 
 def preprocess(x):
-    x = np.apply_along_axis(threshold, 1, x)
+
+    for i in range(x.shape[0]):
+        x[i] = threshold(x[i])
+
+    # x = np.apply_along_axis(threshold, 0, x)
 
     x = x / 255
 

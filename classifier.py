@@ -26,7 +26,7 @@ def show_images(x, y):
     f, axes1 = plt.subplots(len(x) // 5, 5)
     axes = np.reshape(axes1, -1)
     for i, im in enumerate(x):
-        axes[i].imshow(im[0], cmap='gray', vmin=0, vmax=1)
+        axes[i].imshow(im, cmap='gray', vmin=0, vmax=1)
         axes[i].set_title(CLASSES[y[i]])
 
     plt.show()
@@ -91,14 +91,16 @@ class Network(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=5, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=5, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=1, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
 
         self.fc1 = nn.Linear(5 * 10 * 10, 64)
         self.fc2 = nn.Linear(64, 26)
 
     def forward(self, x):
-        # Input: (1, 20, 20)
+        # Input: (20, 20)
+        x = x.view(-1, 1, 20, 20)
 
         # -> (5, 20, 20)
         x = F.relu(self.conv1(x))
