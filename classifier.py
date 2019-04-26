@@ -137,7 +137,10 @@ class Network(nn.Module):
         x = self.dropout2(x)
 
         # -> 26
-        x = F.softmax(self.fc2(x))
+        x = self.fc2(x)
+
+        if not self.training:
+            x = F.softmax(x)
 
         return x
 
