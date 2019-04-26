@@ -13,6 +13,8 @@ from imageio import imread
 CLASSES = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
            'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 
 def one_hot_encode(y, classes):
     result = np.zeros((len(y), classes))
@@ -62,6 +64,8 @@ def train(network, train_x, train_y, steps=5000, minibatch_size=200, lr=0.01):
 
     train_x, train_y = torch.from_numpy(train_x).float(), torch.from_numpy(train_y).long()
 
+    network.to(device)
+
     for i in range(steps):
         c = np.random.choice(len(train_x), minibatch_size)
         x = train_x[c]
@@ -70,16 +74,35 @@ def train(network, train_x, train_y, steps=5000, minibatch_size=200, lr=0.01):
         inputs, labels = Variable(x), Variable(y)
 
         optimizer.zero_grad()
+        inputs = inputs.to(device)
+        labels = labels.to(device)
         outputs = network(inputs)
         loss = loss_function(outputs, labels)
         loss.backward()
         optimizer.step()
 
-        running_loss += loss.data[0]
+        running_loss += loss.data.item()
 
         if i % 50 == 0:
-            print(running_loss / 50)
+            print(f'[Step {i}] Loss: {running_loss / 50:.3e}')
             running_loss = 0
+
+
+def test(network, test_x, test_y):
+    network.to(device)
+
+    test_x, test_y = torch.from_numpy(test_x).float().to(device), torch.from_numpy(test_y).long().to(device)
+    outputs = network(test_x)
+    pred = torch.argmax(outputs, dim=1)
+
+    correct = (pred == test_y).sum().item()
+    total = test_x.size(0)
+
+    loss_function = nn.CrossEntropyLoss()
+    loss = loss_function(outputs, test_y)
+
+    print()
+    print(f'[Test set] Loss: {loss.data.item():.3f}\tAccuracy: {correct / total:.2%}')
 
 
 class Network(nn.Module):
@@ -119,10 +142,11 @@ if __name__ == '__main__':
     show_random_images(x, y, 10)
 
     x = x / 255
-    y = one_hot_encode(y, 26)
+    # y = one_hot_encode(y, 26)
 
-    train_x, test_y, train_y, test_y = train_test_split(x, y, random_state=42)
+    train_x, test_x, train_y, test_y = train_test_split(x, y, random_state=42)
 
     network = Network()
 
     train(network, train_x, train_y)
+    test(network, test_x, test_y)
