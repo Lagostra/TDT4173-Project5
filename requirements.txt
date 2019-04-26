@@ -4,3 +4,4 @@ scipy
 imageio
 torch
 sklearn
+opencv-python

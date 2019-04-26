@@ -1,6 +1,8 @@
 import os
 import numpy as np
 from imageio import imread
+import cv2
+import matplotlib.pyplot as plt
 
 
 def load_data(path, n_images):
@@ -22,18 +24,30 @@ def load_data(path, n_images):
     return x, y
 
 
-def black_characters(x):
-    if np.mean(x) > 0.5:
-        return 1.0 - x
+def threshold(x):
+    image = cv2.imread('data/chars74k-lite/a/a_99.jpg', 0)
+
+    blur = cv2.medianBlur(image, 3)
+
+    th, dst = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+    return dst
 
 
 def preprocess(x):
+    x = np.apply_along_axis(threshold, 1, x)
+
     x = x / 255
 
     # Flip so that all characters are black.
     # x = np.apply_along_axis(black_characters, 1, x)
 
     return x
+
+
+def imshow(im):
+    plt.imshow(im, cmap='gray', vmin=0, vmax=255)
+    plt.show()
 
 
 if __name__ == '__main__':
