@@ -46,6 +46,7 @@ def train(network, train_x, train_y, steps=5000, minibatch_size=200, lr=0.01):
     train_x, train_y = torch.from_numpy(train_x).float(), torch.from_numpy(train_y).long()
 
     network.to(device)
+    network.train()
 
     for i in range(steps):
         c = np.random.choice(len(train_x), minibatch_size)
@@ -71,6 +72,7 @@ def train(network, train_x, train_y, steps=5000, minibatch_size=200, lr=0.01):
 
 def test(network, test_x, test_y):
     network.to(device)
+    network.eval()
 
     test_x, test_y = torch.from_numpy(test_x).float().to(device), torch.from_numpy(test_y).long().to(device)
     outputs = network(test_x)
@@ -91,37 +93,57 @@ class Network(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=5, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
 
-        self.fc1 = nn.Linear(5 * 10 * 10, 64)
-        self.fc2 = nn.Linear(64, 26)
+        self.dropout1 = nn.Dropout2d(0.25)
+        self.dropout2 = nn.Dropout()
+
+        self.fc1 = nn.Linear(128 * 10 * 10, 1024)
+        self.fc2 = nn.Linear(1024, 26)
 
     def forward(self, x):
         # Input: (20, 20)
         x = x.view(-1, 1, 20, 20)
 
-        # -> (5, 20, 20)
+        # -> (32, 20, 20)
         x = F.relu(self.conv1(x))
 
-        # -> (5, 10, 10)
+        # -> (32, 10, 10)
+        #x = self.pool(x)
+
+        # -> (64, 10, 10)
+        x = F.relu(self.conv2(x))
+
+        # -> (64, 5, 5)
+        #x = self.pool(x)
+
+        # -> (128, 20, 20)
+        x = F.relu(self.conv3(x))
+
+        # -> (128, 10, 10)
         x = self.pool(x)
 
-        # Flatten -> (5 * 10 * 10)
-        x = x.view(-1, 5 * 10 * 10)
+        x = self.dropout1(x)
 
-        # -> 64
+        # Flatten -> (128 * 10 * 10)
+        x = x.view(-1, 128 * 10 * 10)
+
+        # -> 1024
         x = F.relu(self.fc1(x))
 
+        x = self.dropout2(x)
+
         # -> 26
-        x = self.fc2(x)
+        x = F.softmax(self.fc2(x))
 
         return x
 
 
 if __name__ == '__main__':
-    data = np.load('data/preprocessed.npz')
+    data = np.load('data/raw.npz')
     x, y = data['x'], data['y']
     show_random_images(x, y, 10)
 
