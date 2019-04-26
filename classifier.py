@@ -1,4 +1,4 @@
-import os
+import pickle
 
 import torch
 import torch.nn as nn
@@ -22,30 +22,11 @@ def one_hot_encode(y, classes):
     return result
 
 
-def load_data(path, n_images):
-    x = np.empty((n_images, 1, 20, 20), dtype=np.uint8)
-    y = np.empty(n_images, dtype=np.uint8)
-
-    classes = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
-    j = 0
-    for i, c in enumerate(classes):
-        p = os.path.join(path, c)
-
-        for im in os.listdir(p):
-            im_p = os.path.join(p, im)
-            x[j, ...] = imread(im_p)
-            y[j, ...] = i
-
-            j += 1
-
-    return x, y
-
-
 def show_images(x, y):
     f, axes1 = plt.subplots(len(x) // 5, 5)
     axes = np.reshape(axes1, -1)
     for i, im in enumerate(x):
-        axes[i].imshow(im[0], cmap='gray', vmin=0, vmax=255)
+        axes[i].imshow(im[0], cmap='gray', vmin=0, vmax=1)
         axes[i].set_title(CLASSES[y[i]])
 
     plt.show()
@@ -138,15 +119,13 @@ class Network(nn.Module):
 
 
 if __name__ == '__main__':
-    x, y = load_data('data/chars74k-lite', 7112)
+    data = np.load('data/preprocessed.npz')
+    x, y = data['x'], data['y']
     show_random_images(x, y, 10)
-
-    x = x / 255
-    # y = one_hot_encode(y, 26)
 
     train_x, test_x, train_y, test_y = train_test_split(x, y, random_state=42)
 
     network = Network()
 
-    train(network, train_x, train_y)
+    train(network, train_x, train_y, steps=10000)
     test(network, test_x, test_y)
