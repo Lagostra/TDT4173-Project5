@@ -88,6 +88,14 @@ def test(network, test_x, test_y):
     print(f'[Test set] Loss: {loss.data.item():.3f}\tAccuracy: {correct / total:.2%}')
 
 
+def save(model, path):
+    torch.save(model, path)
+
+
+def load(path):
+    return torch.load(path)
+
+
 class Network(nn.Module):
 
     def __init__(self):
@@ -140,7 +148,7 @@ class Network(nn.Module):
         x = self.fc2(x)
 
         if not self.training:
-            x = F.softmax(x)
+            x = F.softmax(x, dim=1)
 
         return x
 
@@ -156,3 +164,4 @@ if __name__ == '__main__':
 
     train(network, train_x, train_y, steps=10000)
     test(network, test_x, test_y)
+    save(network, 'model/model1')
