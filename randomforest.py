@@ -16,6 +16,12 @@ def load(path):
         return pickle.load(f)
 
 
+def evaluate(model, x):
+    x = np.reshape(x, (-1, 20*20))
+
+    return model.predict_proba(x)
+
+
 if __name__ == '__main__':
     data = np.load('data/raw.npz')
     x, y = data['x'], data['y']
