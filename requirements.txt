@@ -1,7 +1,5 @@
 numpy
 matplotlib
-scipy
-imageio
 torch
 sklearn
 opencv-python
