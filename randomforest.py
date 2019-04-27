@@ -1,8 +1,20 @@
 import numpy as np
+import pickle
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+
+
+def save(model, path):
+    with open(path, 'wb') as f:
+        pickle.dump(model, f)
+
+
+def load(path):
+    with open(path, 'rb') as f:
+        return pickle.load(f)
+
 
 if __name__ == '__main__':
     data = np.load('data/raw.npz')
@@ -14,6 +26,8 @@ if __name__ == '__main__':
 
     model = RandomForestClassifier(n_estimators=2000, max_features=50, n_jobs=4, verbose=True)
     model.fit(train_x, train_y)
+
+    save(model, 'model/randomforest')
 
     pred_test = model.predict(test_x)
 
