@@ -88,6 +88,11 @@ def test(network, test_x, test_y):
     print(f'[Test set] Loss: {loss.data.item():.3f}\tAccuracy: {correct / total:.2%}')
 
 
+def evaluate(model, x):
+    x = torch.Tensor(x).to(device)
+    return model(x)
+
+
 def save(model, path):
     torch.save(model, path)
 
