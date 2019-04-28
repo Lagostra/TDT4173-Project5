@@ -26,7 +26,7 @@ def overlap(l1, r1, l2, r2):
 
 
 
-def detect_characters(model, image, model_type='randomforest'):
+def detect_characters(model, image, model_type='randomforest', filter_overlaps=True):
     coordinates = []
     confidence = []
     sections = []
@@ -54,30 +54,31 @@ def detect_characters(model, image, model_type='randomforest'):
 
     confidence = np.array(confidence)
 
-    char_detected = np.where(confidence > 0.4)
+    char_detected = np.where(confidence > 0.3)
 
     #detected_coords = coordinates[char_detected]
 
     selected_coords = char_detected[0].tolist()
 
-    for i in char_detected[0]:
-        for j in char_detected[0]:
-            if i == j:
-                continue
+    if filter_overlaps:
+        for i in char_detected[0]:
+            for j in char_detected[0]:
+                if i == j:
+                    continue
 
-            if i not in selected_coords or j not in selected_coords:
-                continue
+                if i not in selected_coords or j not in selected_coords:
+                    continue
 
-            c1 = coordinates[i]
-            c2 = coordinates[j]
+                c1 = coordinates[i]
+                c2 = coordinates[j]
 
-            if overlap(c1, (c1[0] + 20, c1[1] + 20), c2, (c2[0] + 20, c2[1] + 20)):
-                if confidence[i] > confidence[j]:
-                    selected_coords.remove(j)
-                else:
-                    selected_coords.remove(i)
+                if overlap(c1, (c1[0] + 20, c1[1] + 20), c2, (c2[0] + 20, c2[1] + 20)):
+                    if confidence[i] > confidence[j]:
+                        selected_coords.remove(j)
+                    else:
+                        selected_coords.remove(i)
 
-    return coordinates[char_detected]
+    return coordinates[selected_coords]
 
 
 def plot_result(image, coords):
@@ -92,7 +93,7 @@ def plot_result(image, coords):
 
 
 if __name__ == '__main__':
-    image = load('data/detection-images/detection-1.jpg')
+    image = load('data/detection-images/detection-2.jpg')
     image = preprocess(image)
 
     #sections, coords = section(image)
