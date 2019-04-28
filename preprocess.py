@@ -32,19 +32,34 @@ def threshold(x):
     return dst
 
 
-def preprocess(x):
+def preprocess(x, y, do_threshold=False, flip=True, rotate=True):
 
-    for i in range(x.shape[0]):
-        x[i] = threshold(x[i])
+    if rotate:
+        M = cv2.getRotationMatrix2D((9.5, 9.5), 90, 1.0)
+
+        for i in range(x.shape[0]):
+            rotated = cv2.warpAffine(x[i], M, (20, 20))
+            x = np.append(x, np.reshape(rotated, (-1, 20, 20)), axis=0)
+            y = np.append(y, y[i])
+
+    if flip:
+        for i in range(x.shape[0]):
+            x = np.append(x, [
+                cv2.flip(x[i], 0),
+                cv2.flip(x[i], 1),
+                cv2.flip(x[i], -1)
+            ], axis=0)
+            y = np.append(y, [y[i]] * 3)
+
+    if do_threshold:
+        for i in range(x.shape[0]):
+            x[i] = threshold(x[i])
 
     # x = np.apply_along_axis(threshold, 0, x)
 
     x = x / 255
 
-    # Flip so that all characters are black.
-    # x = np.apply_along_axis(black_characters, 1, x)
-
-    return x
+    return x, y
 
 
 def imshow(im):
@@ -55,6 +70,6 @@ def imshow(im):
 if __name__ == '__main__':
     x, y = load_data('data/chars74k-lite', 7112)
 
-    x = preprocess(x)
+    x, y = preprocess(x, y, do_threshold=False, flip=True, rotate=True)
 
-    np.savez('data/preprocessed.npz', x=x, y=y)
+    np.savez('data/enhanced.npz', x=x, y=y)
