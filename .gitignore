@@ -108,3 +108,5 @@ venv.bak/
 
 images/
 model/
+
+*.npz
