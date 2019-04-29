@@ -23,7 +23,7 @@ def evaluate(model, x):
 
 
 if __name__ == '__main__':
-    data = np.load('data/raw.npz')
+    data = np.load('data/thresholded.npz')
     x, y = data['x'], data['y']
 
     x = np.reshape(x, (-1, 20*20))
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     model = RandomForestClassifier(n_estimators=1000, max_features=40, n_jobs=4, verbose=True)
     model.fit(train_x, train_y)
 
-    save(model, 'model/randomforest')
+    save(model, 'model/randomforest-thresholded')
 
     pred_test = model.predict(test_x)
 

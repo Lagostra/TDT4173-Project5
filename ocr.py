@@ -6,6 +6,8 @@ import randomforest
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
+from preprocess import threshold
+
 
 def load(path):
     return cv2.imread(path, 0)
@@ -104,8 +106,13 @@ if __name__ == '__main__':
     image = load('data/detection-images/detection-2.jpg')
     image = preprocess(image)
 
-    model = randomforest.load('model/randomforest')
+    model_type = ('cnn', 'randomforest', 'randomforest-thresholded')[2]
 
-    detected_coords = detect_characters(model, image, rotate=False, model_type='randomforest')
+    if model_type.startswith('randomforest'):
+        model = randomforest.load(f'model/{model_type}')
+    elif model_type.startswith('cnn'):
+        model = cnn.load(f'model/{model_type}')
+
+    detected_coords = detect_characters(model, image, rotate=False, model_type=model_type)
 
     plot_result(image, detected_coords)

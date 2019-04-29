@@ -205,4 +205,4 @@ if __name__ == '__main__':
     # pretrain(network, 1000)
     train(network, train_x, train_y, steps=5000)
     test(network, test_x, test_y)
-    save(network, 'model/model1')
+    save(network, 'model/cnn')
