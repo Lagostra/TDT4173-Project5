@@ -25,38 +25,46 @@ def overlap(l1, r1, l2, r2):
     return True
 
 
-
-def detect_characters(model, image, model_type='randomforest', filter_overlaps=True):
+def detect_characters(model, image, model_type='randomforest', filter_overlaps=True, rotate=False):
     coordinates = []
     confidence = []
     sections = []
     for y in range(0, image.shape[0] - 20, 1):
-        row = []
         for x in range(0, image.shape[1] - 20, 1):
             s = image[y:y+20, x:x+20]
-            row.append(s)
+
+            if s.mean() > 0.70:
+                continue
+
+            sections.append(s)
             coordinates.append((x, y))
 
-        sections.append(row)
+            if rotate:
+                M = cv2.getRotationMatrix2D((9.5, 9.5), 90, 1.0)
+                rotated = cv2.warpAffine(s, M, (20, 20))
+                sections.append(rotated)
+                M = cv2.getRotationMatrix2D((9.5, 9.5), 180, 1.0)
+                sections.append(cv2.warpAffine(s, M, (20, 20)))
+                M = cv2.getRotationMatrix2D((9.5, 9.5), 270, 1.0)
+                sections.append(cv2.warpAffine(s, M, (20, 20)))
+
+                coordinates.extend([(x, y)] * 3)
 
     sections = np.array(sections)
     coordinates = np.array(coordinates)
 
     if model_type == 'randomforest':
-        sections = np.reshape(sections, (-1, 20, 20))
-
         pred = randomforest.evaluate(model, sections)
         conf = pred.max(1)
         confidence = conf
     elif model_type == 'cnn':
-        for i, row in enumerate(sections):
-            print(f'Evaluating row {i}')
-
+        for i in range(0, sections.shape[0], 1000):
+            pred = cnn.evaluate(model, sections[i:i + 1000])
+            conf = pred.max(1)[0]
+            confidence.extend(conf.tolist())
     confidence = np.array(confidence)
 
-    char_detected = np.where(confidence > 0.3)
-
-    #detected_coords = coordinates[char_detected]
+    char_detected = np.where(confidence > 0.5)
 
     selected_coords = char_detected[0].tolist()
 
@@ -96,10 +104,8 @@ if __name__ == '__main__':
     image = load('data/detection-images/detection-2.jpg')
     image = preprocess(image)
 
-    #sections, coords = section(image)
-
     model = randomforest.load('model/randomforest')
 
-    detected_coords = detect_characters(model, image)
+    detected_coords = detect_characters(model, image, rotate=False, model_type='randomforest')
 
     plot_result(image, detected_coords)
