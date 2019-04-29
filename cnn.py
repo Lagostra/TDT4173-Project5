@@ -202,8 +202,6 @@ if __name__ == '__main__':
 
     network = Network()
 
-    network.optimizer = torch.optim.Adam(network.parameters(), lr=0.01)
-
     # pretrain(network, 1000)
     train(network, train_x, train_y, steps=5000)
     test(network, test_x, test_y)
