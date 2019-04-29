@@ -24,31 +24,45 @@ def load_data(path, n_images):
     return x, y
 
 
-def threshold(x):
+def threshold(x, scaled=False):
+    if scaled:
+        x = (x * 255).astype(np.uint8)
+
     blur = cv2.medianBlur(x, 3)
 
     th, dst = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
+    dst = dst / 255
+
     return dst
+
+
+def rotate(x, angle=90):
+    M = cv2.getRotationMatrix2D((9.5, 9.5), angle, 1.0)
+
+    return cv2.warpAffine(x, M, (20, 20))
+
+
+def flip(x):
+    return [
+                cv2.flip(x, 0),
+                cv2.flip(x, 1),
+                cv2.flip(x, -1)
+            ]
 
 
 def preprocess(x, y, do_threshold=False, flip=True, rotate=True):
 
     if rotate:
-        M = cv2.getRotationMatrix2D((9.5, 9.5), 90, 1.0)
 
         for i in range(x.shape[0]):
-            rotated = cv2.warpAffine(x[i], M, (20, 20))
+            rotated = rotate(x)
             x = np.append(x, np.reshape(rotated, (-1, 20, 20)), axis=0)
             y = np.append(y, y[i])
 
     if flip:
         for i in range(x.shape[0]):
-            x = np.append(x, [
-                cv2.flip(x[i], 0),
-                cv2.flip(x[i], 1),
-                cv2.flip(x[i], -1)
-            ], axis=0)
+            x = np.append(x, flip(x[i]), axis=0)
             y = np.append(y, [y[i]] * 3)
 
     if do_threshold:

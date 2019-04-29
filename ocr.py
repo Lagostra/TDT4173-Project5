@@ -6,7 +6,7 @@ import randomforest
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
-from preprocess import threshold
+from preprocess import threshold, flip, rotate
 
 
 def load(path):
@@ -27,7 +27,7 @@ def overlap(l1, r1, l2, r2):
     return True
 
 
-def detect_characters(model, image, model_type='randomforest', filter_overlaps=True, rotate=False):
+def detect_characters(model, image, model_type='randomforest', filter_overlaps=True, do_rotate=False, do_flip=False):
     coordinates = []
     confidence = []
     sections = []
@@ -35,21 +35,20 @@ def detect_characters(model, image, model_type='randomforest', filter_overlaps=T
         for x in range(0, image.shape[1] - 20, 1):
             s = image[y:y+20, x:x+20]
 
-            if s.mean() > 0.70:
+            if s.mean() > 0.95:
                 continue
 
             sections.append(s)
             coordinates.append((x, y))
 
-            if rotate:
-                M = cv2.getRotationMatrix2D((9.5, 9.5), 90, 1.0)
-                rotated = cv2.warpAffine(s, M, (20, 20))
+            if do_rotate:
+                rotated = rotate(s, 90)
                 sections.append(rotated)
-                M = cv2.getRotationMatrix2D((9.5, 9.5), 180, 1.0)
-                sections.append(cv2.warpAffine(s, M, (20, 20)))
-                M = cv2.getRotationMatrix2D((9.5, 9.5), 270, 1.0)
-                sections.append(cv2.warpAffine(s, M, (20, 20)))
 
+                coordinates.extend([(x, y)] * 1)
+
+            if do_flip:
+                sections.extend(flip(s))
                 coordinates.extend([(x, y)] * 3)
 
     sections = np.array(sections)
@@ -57,14 +56,13 @@ def detect_characters(model, image, model_type='randomforest', filter_overlaps=T
 
     if 'threshold' in model_type:
         for i in range(sections.shape[0]):
-            sections[i] = threshold(sections[i])
+            sections[i] = threshold(sections[i], scaled=True)
 
-
-    if model_type == 'randomforest':
+    if model_type.startswith('randomforest'):
         pred = randomforest.evaluate(model, sections)
         conf = pred.max(1)
         confidence = conf
-    elif model_type == 'cnn':
+    elif model_type.startswith('cnn'):
         for i in range(0, sections.shape[0], 1000):
             pred = cnn.evaluate(model, sections[i:i + 1000])
             conf = pred.max(1)[0]
@@ -108,16 +106,18 @@ def plot_result(image, coords):
 
 
 if __name__ == '__main__':
-    image = load('data/detection-images/detection-2.jpg')
+    image = load('data/detection-images/detection-1.jpg')
     image = preprocess(image)
 
     model_type = ('cnn', 'randomforest', 'randomforest-thresholded')[2]
+    do_rotate = False
+    do_flip = False
 
     if model_type.startswith('randomforest'):
         model = randomforest.load(f'model/{model_type}')
     elif model_type.startswith('cnn'):
         model = cnn.load(f'model/{model_type}')
 
-    detected_coords = detect_characters(model, image, rotate=False, model_type=model_type)
+    detected_coords = detect_characters(model, image, do_rotate=do_rotate, do_flip=do_flip, model_type=model_type)
 
     plot_result(image, detected_coords)
