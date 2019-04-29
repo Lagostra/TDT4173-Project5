@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 
 from sklearn.model_selection import train_test_split
 from imageio import imread
@@ -37,6 +38,39 @@ def show_random_images(x, y, n):
     show_images(x[choice], y[choice])
 
 
+def pretrain(network, steps):
+    network.to(device)
+
+    x = []
+    x.append(np.zeros((20, 20)))
+    x.append(np.ones((20, 20)))
+
+    for i in range(100):
+        img = np.ones((20, 20))
+        img = cv2.randn(img, 0.5, 0.5)
+
+        x.append(img)
+
+    x = np.array(x)
+    y = np.array([[1] * 26] * x.shape[0])
+
+    x, y = torch.from_numpy(x).float(), torch.from_numpy(y).float()
+    inputs, labels = Variable(x).to(device), Variable(y).to(device)
+    loss_function = nn.MSELoss()
+    optimizer = torch.optim.Adam(network.parameters(), lr=0.1)
+
+    for i in range(steps):
+        outputs = network(inputs)
+        loss = loss_function(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        if i % 50 == 0:
+            print(f'Pretraining... Step {i}/{steps}')
+
+        optimizer.zero_grad()
+
+
 def train(network, train_x, train_y, steps=5000, minibatch_size=200, lr=0.01):
     loss_function = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(network.parameters(), lr=lr)
@@ -55,7 +89,6 @@ def train(network, train_x, train_y, steps=5000, minibatch_size=200, lr=0.01):
 
         inputs, labels = Variable(x), Variable(y)
 
-        optimizer.zero_grad()
         inputs = inputs.to(device)
         labels = labels.to(device)
         outputs = network(inputs)
@@ -68,6 +101,8 @@ def train(network, train_x, train_y, steps=5000, minibatch_size=200, lr=0.01):
         if i % 50 == 0:
             print(f'[Step {i}] Loss: {running_loss / 50:.3e}')
             running_loss = 0
+
+        optimizer.zero_grad()
 
 
 def test(network, test_x, test_y):
@@ -167,6 +202,9 @@ if __name__ == '__main__':
 
     network = Network()
 
-    train(network, train_x, train_y, steps=10000)
+    network.optimizer = torch.optim.Adam(network.parameters(), lr=0.01)
+
+    # pretrain(network, 1000)
+    train(network, train_x, train_y, steps=5000)
     test(network, test_x, test_y)
     save(network, 'model/model1')
