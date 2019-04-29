@@ -55,6 +55,11 @@ def detect_characters(model, image, model_type='randomforest', filter_overlaps=T
     sections = np.array(sections)
     coordinates = np.array(coordinates)
 
+    if 'threshold' in model_type:
+        for i in range(sections.shape[0]):
+            sections[i] = threshold(sections[i])
+
+
     if model_type == 'randomforest':
         pred = randomforest.evaluate(model, sections)
         conf = pred.max(1)

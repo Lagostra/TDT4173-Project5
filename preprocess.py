@@ -55,8 +55,6 @@ def preprocess(x, y, do_threshold=False, flip=True, rotate=True):
         for i in range(x.shape[0]):
             x[i] = threshold(x[i])
 
-    # x = np.apply_along_axis(threshold, 0, x)
-
     x = x / 255
 
     return x, y
