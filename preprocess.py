@@ -82,6 +82,14 @@ def imshow(im):
 if __name__ == '__main__':
     x, y = load_data('data/chars74k-lite', 7112)
 
-    x, y = preprocess(x, y, do_threshold=False, flip=True, rotate=True)
+    x1, y1 = preprocess(x, y, do_threshold=False, flip=False, rotate=False)
+    np.savez('data/raw.npz', x=x, y=y)
 
+    x1, y1 = preprocess(x, y, do_threshold=False, flip=True, rotate=True)
     np.savez('data/enhanced.npz', x=x, y=y)
+
+    x1, y1 = preprocess(x, y, do_threshold=True, flip=False, rotate=False)
+    np.savez('data/thresholded.npz', x=x, y=y)
+
+    x1, y1 = preprocess(x, y, do_threshold=True, flip=True, rotate=True)
+    np.savez('data/enhanced-thresholded.npz', x=x, y=y)
