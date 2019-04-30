@@ -109,7 +109,7 @@ if __name__ == '__main__':
     image = load('data/detection-images/detection-1.jpg')
     image = preprocess(image)
 
-    model_type = ('cnn', 'randomforest', 'randomforest-thresholded')[2]
+    model_type = ('cnn', 'cnn-thresholded', 'randomforest', 'randomforest-thresholded')[3]
     do_rotate = False
     do_flip = False
 

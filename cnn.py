@@ -194,6 +194,7 @@ class Network(nn.Module):
 
 
 if __name__ == '__main__':
+    # ******************** TRAIN ON RAW DATA ******************************
     data = np.load('data/raw.npz')
     x, y = data['x'], data['y']
     show_random_images(x, y, 10)
@@ -206,3 +207,17 @@ if __name__ == '__main__':
     train(network, train_x, train_y, steps=5000)
     test(network, test_x, test_y)
     save(network, 'model/cnn')
+
+    # ******************** TRAIN ON THRESHOLDED DATA ******************************
+    data = np.load('data/thresholded.npz')
+    x, y = data['x'], data['y']
+    show_random_images(x, y, 10)
+
+    train_x, test_x, train_y, test_y = train_test_split(x, y, random_state=42)
+
+    network = Network()
+
+    # pretrain(network, 1000)
+    train(network, train_x, train_y, steps=5000)
+    test(network, test_x, test_y)
+    save(network, 'model/cnn-thresholded')
